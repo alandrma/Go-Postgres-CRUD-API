@@ -13,6 +13,3 @@ docker-compose up
 ```
 go run main.go
 ```
-
-### Masih progress ya
-Masih belum update sama delete
