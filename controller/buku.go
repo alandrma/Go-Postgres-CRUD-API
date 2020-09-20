@@ -25,8 +25,36 @@ type Response struct {
 	Data    []models.Buku `json:"data"`
 }
 
+// TambahBuku
+func TmbhBuku(w http.ResponseWriter, r *http.Request) {
+
+	// create an empty user of type models.User
+	// kita buat empty buku dengan tipe models.Buku
+	var buku models.Buku
+
+	// decode data json request ke buku
+	err := json.NewDecoder(r.Body).Decode(&buku)
+
+	if err != nil {
+		log.Fatalf("Tidak bisa mendecode dari request body.  %v", err)
+	}
+
+	// panggil modelsnya lalu insert buku
+	insertID := models.TambahBuku(buku)
+
+	// format response objectnya
+	res := response{
+		ID:      insertID,
+		Message: "Data buku telah ditambahkan",
+	}
+
+	// kirim response
+	json.NewEncoder(w).Encode(res)
+}
+
 // AmbilBuku mengambil single data dengan parameter id
 func AmbilBuku(w http.ResponseWriter, r *http.Request) {
+	// kita set headernya
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// dapatkan idbuku dari parameter request, keynya adalah "id"

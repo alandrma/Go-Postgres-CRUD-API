@@ -10,12 +10,41 @@ import (
 )
 
 // Buku schema dari tabel Buku
-// kita coba dengan null string
+// kita coba dengan jika datanya null
+// jika return datanya ada yg null, silahkan pake NullString, contohnya dibawah
+// Penulis       config.NullString `json:"penulis"`
 type Buku struct {
-	ID            int64             `json:"id"`
-	Judul_buku    config.NullString `json:"judul_buku"`
-	Penulis       string            `json:"penulis"`
-	Tgl_publikasi string            `json:"tgl_publikasi"`
+	ID            int64  `json:"id"`
+	Judul_buku    string `json:"judul_buku"`
+	Penulis       string `json:"penulis"`
+	Tgl_publikasi string `json:"tgl_publikasi"`
+}
+
+func TambahBuku(buku Buku) int64 {
+
+	// mengkoneksikan ke db postgres
+	db := config.CreateConnection()
+
+	// kita tutup koneksinya di akhir proses
+
+	// kita buat insert query
+	// returning id will return the id of the inserted buku
+	sqlStatement := `INSERT INTO buku (judul_buku, penulis, tgl_publikasi) VALUES ($1, $2, $3) RETURNING id`
+
+	// the inserted id will store in this id
+	var id int64
+
+	// Scan function will save the insert id in the id
+	err := db.QueryRow(sqlStatement, buku.Judul_buku, buku.Penulis, buku.Tgl_publikasi).Scan(&id)
+
+	if err != nil {
+		log.Fatalf("Tidak Bisa mengeksekusi query. %v", err)
+	}
+
+	fmt.Printf("Insert data single record %v", id)
+
+	// return the inserted id
+	return id
 }
 
 // ambil satu buku
@@ -28,7 +57,7 @@ func AmbilSemuaBuku() ([]Buku, error) {
 
 	var bukus []Buku
 
-	// kita buat sleect query
+	// kita buat select query
 	sqlStatement := `SELECT * FROM buku`
 
 	// mengeksekusi sql query
