@@ -2,7 +2,8 @@ package controller
 
 import (
 	"encoding/json" // package untuk enkode dan mendekode json menjadi struct dan sebaliknya
-	"strconv"       // package yang digunakan untuk mengubah string menjadi tipe int
+	"fmt"
+	"strconv" // package yang digunakan untuk mengubah string menjadi tipe int
 
 	"log"
 	"net/http" // digunakan untuk mengakses objek permintaan dan respons dari api
@@ -12,6 +13,17 @@ import (
 	"github.com/gorilla/mux" // digunakan untuk mendapatkan parameter dari router
 	_ "github.com/lib/pq"    // postgres golang driver
 )
+
+type response struct {
+	ID      int64  `json:"id,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type Response struct {
+	Status  int           `json:"status"`
+	Message string        `json:"message"`
+	Data    []models.Buku `json:"data"`
+}
 
 // AmbilBuku mengambil single data dengan parameter id
 func AmbilBuku(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +61,40 @@ func AmbilSemuaBuku(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("Tidak bisa mengambil data. %v", err)
 	}
 
+	var response Response
+	response.Status = 1
+	response.Message = "Success"
+	response.Data = bukus
+
 	// send all the users as response
-	json.NewEncoder(w).Encode(bukus)
+	json.NewEncoder(w).Encode(response)
+}
+
+// DeleteUser delete user's detail in the postgres db
+func HapusBuku(w http.ResponseWriter, r *http.Request) {
+
+	// get the userid from the request params, key is "id"
+	params := mux.Vars(r)
+
+	// convert the id in string to int
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		log.Fatalf(" Tidak bisa mengubah dari string ke int.  %v", err)
+	}
+
+	// call the deleteUser, convert the int to int64
+	deletedRows := models.HapusBuku(int64(id))
+
+	// format the message string
+	msg := fmt.Sprintf("buku sukses di hapus. Total data yang dihapus %v", deletedRows)
+
+	// format the reponse message
+	res := response{
+		ID:      int64(id),
+		Message: msg,
+	}
+
+	// send the response
+	json.NewEncoder(w).Encode(res)
 }
