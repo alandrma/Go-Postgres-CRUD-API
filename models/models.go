@@ -26,15 +26,16 @@ func TambahBuku(buku Buku) int64 {
 	db := config.CreateConnection()
 
 	// kita tutup koneksinya di akhir proses
+	defer db.Close()
 
 	// kita buat insert query
-	// returning id will return the id of the inserted buku
+	// mengembalikan nilai id akan mengembalikan id dari buku yang dimasukkan ke db
 	sqlStatement := `INSERT INTO buku (judul_buku, penulis, tgl_publikasi) VALUES ($1, $2, $3) RETURNING id`
 
-	// the inserted id will store in this id
+	// id yang dimasukkan akan disimpan di id ini
 	var id int64
 
-	// Scan function will save the insert id in the id
+	// Scan function akan menyimpan insert id didalam id id
 	err := db.QueryRow(sqlStatement, buku.Judul_buku, buku.Penulis, buku.Tgl_publikasi).Scan(&id)
 
 	if err != nil {
@@ -43,7 +44,7 @@ func TambahBuku(buku Buku) int64 {
 
 	fmt.Printf("Insert data single record %v", id)
 
-	// return the inserted id
+	// return insert id
 	return id
 }
 
@@ -121,7 +122,38 @@ func AmbilSatuBuku(id int64) (Buku, error) {
 	return buku, err
 }
 
-// delete user in the DB
+// update user in the DB
+func UpdateBuku(id int64, buku Buku) int64 {
+
+	// mengkoneksikan ke db postgres
+	db := config.CreateConnection()
+
+	// kita tutup koneksinya di akhir proses
+	defer db.Close()
+
+	// kita buat sql query create
+	sqlStatement := `UPDATE buku SET judul_buku=$2, penulis=$3, tgl_publikasi=$4 WHERE id=$1`
+
+	// eksekusi sql statement
+	res, err := db.Exec(sqlStatement, id, buku.Judul_buku, buku.Penulis, buku.Tgl_publikasi)
+
+	if err != nil {
+		log.Fatalf("Tidak bisa mengeksekusi query. %v", err)
+	}
+
+	// cek berapa banyak row/data yang diupdate
+	rowsAffected, err := res.RowsAffected()
+
+	//kita cek
+	if err != nil {
+		log.Fatalf("Error ketika mengecheck rows/data yang diupdate. %v", err)
+	}
+
+	fmt.Printf("Total rows/record yang diupdate %v\n", rowsAffected)
+
+	return rowsAffected
+}
+
 func HapusBuku(id int64) int64 {
 
 	// mengkoneksikan ke db postgres
@@ -133,14 +165,14 @@ func HapusBuku(id int64) int64 {
 	// buat sql query
 	sqlStatement := `DELETE FROM buku WHERE id=$1`
 
-	// execute the sql statement
+	// eksekusi sql statement
 	res, err := db.Exec(sqlStatement, id)
 
 	if err != nil {
 		log.Fatalf("tidak bisa mengeksekusi query. %v", err)
 	}
 
-	// check how many rows affected
+	// cek berapa jumlah data/row yang di hapus
 	rowsAffected, err := res.RowsAffected()
 
 	if err != nil {

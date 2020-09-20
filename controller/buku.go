@@ -64,7 +64,7 @@ func AmbilBuku(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf(" Tidak bisa mengubah dari string ke int.  %v", err)
+		log.Fatalf("Tidak bisa mengubah dari string ke int.  %v", err)
 	}
 
 	// memanggil models ambilsatubuku dengan parameter id yg nantinya akan mengambil single data
@@ -94,30 +94,67 @@ func AmbilSemuaBuku(w http.ResponseWriter, r *http.Request) {
 	response.Message = "Success"
 	response.Data = bukus
 
-	// send all the users as response
+	// kirim semua response
 	json.NewEncoder(w).Encode(response)
 }
 
-// DeleteUser delete user's detail in the postgres db
-func HapusBuku(w http.ResponseWriter, r *http.Request) {
+func UpdateBuku(w http.ResponseWriter, r *http.Request) {
 
-	// get the userid from the request params, key is "id"
+	// kita ambil request parameter idnya
 	params := mux.Vars(r)
 
-	// convert the id in string to int
+	// konversikan ke int yang sebelumnya adalah string
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Fatalf(" Tidak bisa mengubah dari string ke int.  %v", err)
+		log.Fatalf("Tidak bisa mengubah dari string ke int.  %v", err)
 	}
 
-	// call the deleteUser, convert the int to int64
+	// buat variable buku dengan type models.Buku
+	var buku models.Buku
+
+	// decode json request ke variable buku
+	err = json.NewDecoder(r.Body).Decode(&buku)
+
+	if err != nil {
+		log.Fatalf("Tidak bisa decode request body.  %v", err)
+	}
+
+	// panggil updatebuku untuk mengupdate data
+	updatedRows := models.UpdateBuku(int64(id), buku)
+
+	// ini adalah format message berupa string
+	msg := fmt.Sprintf("Buku telah berhasil diupdate. Jumlah yang diupdate %v rows/record", updatedRows)
+
+	// ini adalah format response message
+	res := response{
+		ID:      int64(id),
+		Message: msg,
+	}
+
+	// kirim berupa response
+	json.NewEncoder(w).Encode(res)
+}
+
+func HapusBuku(w http.ResponseWriter, r *http.Request) {
+
+	// kita ambil request parameter idnya
+	params := mux.Vars(r)
+
+	// konversikan ke int yang sebelumnya adalah string
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		log.Fatalf("Tidak bisa mengubah dari string ke int.  %v", err)
+	}
+
+	// panggil fungsi hapusbuku , dan convert int ke int64
 	deletedRows := models.HapusBuku(int64(id))
 
-	// format the message string
+	// ini adalah format message berupa string
 	msg := fmt.Sprintf("buku sukses di hapus. Total data yang dihapus %v", deletedRows)
 
-	// format the reponse message
+	// ini adalah format reponse message
 	res := response{
 		ID:      int64(id),
 		Message: msg,
